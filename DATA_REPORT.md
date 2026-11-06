@@ -10,22 +10,18 @@
 ---
 
 ## 1. 資料集概覽 (Dataset Overview)
-
-> 數字來源：`01_Data_Ingestion.ipynb` 第 2 節 (掃描 PDF) 與第 5 節 (批次處理) 的輸出。
-
 | 類別 (Cluster) | PDF 數量 | 清洗前 chunk 數 | 清洗後 chunk 數 |
-|Academic_Affairs     3             113              81
-|Library_Information  3            309               277
-|Student_Affairs      3              77              61
-|**合計**             9              499              419
+|---|---|---|---|
+| Academic_Affairs | 3 | 113 | 81 |
+| Library_Information | 3 | 309 | 277 |
+| Student_Affairs | 3 | 77 | 61 |
+| **合計** | **9** | **499** | **419** |
 
-**問題 (2–3 句)：** 清洗後 chunk 數量變少了多少？是哪個任務造成的？有沒有哪個任務**不影響** chunk 數量？為什麼？
-A:清洗後的 chunk 數量由 499 個減少為 419 個，共減少 80 個，約減少 16.03%。
+清洗後的 chunk 數量由 499 個減少為 419 個，共減少 80 個，約減少 16.03%。
 任務 1-A 刪除帶有 `##` 的獨立頁首頁尾標題，以及任務 1-B 合併連續的中英文標題，都可能減少切塊邊界。
 任務 1-C 合併文字與英文清單條文，但不移除 `##` 標題邊界，因此依照目前的切塊規則，不影響 chunk 數量。
-> 提示：chunk 是用什麼規則切開的？請看 notebook 第 5 節的 `chunking_regex`。
 
-___
+
 
 ## 2. 清洗步驟 (Cleaning Steps)
 
@@ -56,32 +52,26 @@ ___
 - 這個任務有沒有改錯的地方：有。在 `cleaned_A232060013_學生抵免學分辦法.md` 搜尋「Article 4 Principles」，可看到「Article 4 Principles of Course Waiver and Credit Transfer」與「Principles of course waiver」被合併。兩者是英文條文標題與其子標題，並非中英文對照；目前規則只檢查下一個標題是否以英文字母開頭，因此也會誤合併這類標題。
 
 ### 2.3 任務 1-C：雙語條文合併
-截圖：![1-C](reports/figures/1c_compare.png)
-改變了什麼：清洗前第 211 行的獨立標題「## 大學部學則」被刪除，清洗後已沒有該行。
-這對之後的問答檢索有什麼幫助：若刪除的是重複頁首頁尾，可減少無關文字與多餘的切塊邊界，降低檢索干擾。
-這個任務有沒有改錯的地方：有疑似誤刪。在 raw_A232020018_大學部學則.md 搜尋「大學部學則」，第 211 行位於校名與修訂日期之間，應屬正式標題。清洗規則只依整行文字是否符合文件名稱判斷，未區分正式標題與重複頁首頁尾，因此也將這個標題刪除。
+-檔名：`raw_A232060013_學生抵免學分辦法.md` 與 `cleaned_A232060013_學生抵免學分辦法.md`；搜尋的文字：`Article 6 Regulations`
+- 截圖：![1-C](reports/figures/1c_compare.png)
+- 改變了什麼：移除英文「Article 6 Regulations for the Transfer of Credits and Grade Registration for Courses Taken Abroad」前的清單符號，以「 / 」接到前一行中文第三款結尾。
+- 這對之後的問答檢索有什麼幫助：讓相關中英文文字在閱讀時更連貫，但本例沒有改變 `##` 切塊邊界，因此沒有減少 chunk 數量。
+- 這個任務有沒有改錯的地方：有合併位置不理想的情況。英文第六條標題被接到中文第三款後面，而非中文第六條標題後面。規則沒有核對條號與對應關係，造成英文標題與中文第三款混在同一行。
 
 ## 3. 評估指標與 AI 解讀查證 (Metrics & Verifying the AI's Interpretation)
-
 ### 3.1 指標數據表
-
-> 數字來源：專案根目錄的 `metrics.json`。[1]、[2] 必填；[3]、[4] 選填。
-> 「參考值」由老師在課堂上公布 (完成全部任務的結果)。
 
 | 指標 | Raw | Cleaned（你的） | Cleaned（參考值） |
 |---|---|---|---|
-| [1] 中位數長度 Median Length | 171.0 | 226.0 | 
-| [2] 拓撲錨定率 TAR | 100.00% | 100.00% | 
-| [3] 深度變異量 SDV | 0.00 | 0.00 | 
-| [4] 中位數資訊熵 Entropy | 4.56 | 4.94 
-
-> **儀表板截圖：** 你自己的 `01_Data_Ingestion.ipynb` **第 6 節**輸出的 4 拼圖儀表板 (第 8 週執行並保留的輸出)。截圖後存為 `reports/figures/dashboard.png`。第 3.2 節也會用到這張截圖。
-
+| [1] 中位數長度 Median Length | 171.0 | 226.0 | 未取得 |
+| [2] 拓撲錨定率 TAR | 100.00% | 100.00% | 未取得 |
+| [3] 深度變異量 SDV | 0.00 | 0.00 | 未取得 |
+| [4] 中位數資訊熵 Entropy | 4.56 | 4.94 | 未取得 |
 ![dashboard](reports/figures/dashboard.png)
-
+> **儀表板截圖：** 你自己的 `01_Data_Ingestion.ipynb` **第 6 節**輸出的 4 拼圖儀表板 (第 8 週執行並保留的輸出)。截圖後存為 `reports/figures/dashboard.png`。第 3.2 節也會用到這張截圖。
+![dashboard](reports/figures/dashboard.png)
 你的 Cleaned 結果與參考值一致嗎？若一致，寫「一致」；若不一致，找出原因。（1 句）
-
-___
+目前未取得老師公布的參考值，因此無法判斷自己的 Cleaned 結果是否與參考值一致。
 
 ### 3.2 AI 的解讀
 
@@ -208,7 +198,5 @@ The courses allowed for waiver shall include both required and elective courses.
 - **對問答檢索的影響**：不同意義的標題混在同一行，可能讓區塊的主題標示不清楚，影響檢索定位與回答時的條文引用。
 
 ## 5. AI 協作 (AI Collaboration)
-- 本次作業的 AI 協作紀錄請見 [`AI_USAGE.md`](AI_USAGE.md) 的「Week 04 / 08」與「Week 09」段落。
-- 這次使用 AI 最大的收穫或教訓是 ___（請具體：例如提示詞中哪一段最關鍵、AI 哪一句解讀不正確）
 - 本次作業的 AI 協作紀錄請見 [`AI_USAGE.md`](AI_USAGE.md) 的「Week 04 / 08」與「Week 09」段落。
 - 這次使用 AI 最大的收穫是，提供真實檔案、程式和執行輸出，比只描述問題更容易得到有證據的分析。例如 TAR 雖然達到 100%，但查看程式後才知道它只檢查開頭是否有標題符號，不能代表內容完整。另外，比較清洗前後文件也發現規則可能誤刪正式標題或合併不同的英文標題，因此不能只看指標就認為清洗成功。
